@@ -1,0 +1,23 @@
+@server = http://localhost:4004
+@auth = Authorization: : Basic alice:
+
+
+### SalesOrder.A_SalesOrder
+POST {{server}}/proxy/A_SalesOrder
+Content-Type: application/json
+
+{
+    "SalesOrderType": "ORB",
+    "PurchaseOrderByCustomer": "Patrick CAP",
+    "SoldToParty": "14100001",
+    "TotalNetAmount": "1000",
+    "to_Item": [
+        {
+            "SalesOrderItem": "1",
+            "Material": "MGS-1000",
+            "RequestedQuantity": "1",
+            "RequestedQuantityUnit": "KG",
+            "NetAmount": "1000"
+        }
+    ]
+}

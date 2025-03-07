@@ -1,0 +1,63 @@
+_schema-version: 3.3.0
+ID: lab2cash-proxy
+version: 1.0.0
+description: "S/4HANA proxy."
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+modules:
+  - name: lab2cash-proxy-cap-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+    build-parameters:
+      builder: npm
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: lab2cash-proxy-cap-destination
+      - name: lab2cash-proxy-cap-connectivity
+      - name: lab2cash-proxy-cap-auth
+
+resources:
+  - name: lab2cash-proxy-cap-connectivity
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: connectivity
+      service-plan: lite
+
+  - name: lab2cash-proxy-cap-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+            existing_destinations_policy: update
+        version: 1.0.0
+      service: destination
+      service-plan: lite
+
+  - name: lab2cash-proxy-cap-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: lab2cash-proxy-${space}
+        tenant-mode: dedicated
